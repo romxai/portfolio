@@ -21,15 +21,15 @@ interface SceneProps {
 
 // Animation and smoothing constants
 const NO_OF_POINTS = 2000;
-const SCROLL_SMOOTHING = 2;
-const MOVEMENT_SMOOTHING = 4;
+const SCROLL_SMOOTHING = 10;
+const MOVEMENT_SMOOTHING = 5;
 
 // Camera configuration
 const CAMERA_CONFIG = {
-  FOV: 40,
-  HEIGHT: 1.5, // Height above the path
-  DISTANCE: 8, // Distance from the plane
-  INITIAL_POSITION: new THREE.Vector3(0, 1.5, 8),
+  FOV: 30,
+  HEIGHT: 1.2, // Height above the path
+  DISTANCE: 10, // Distance from the plane
+  INITIAL_POSITION: new THREE.Vector3(0, 1.5, 10),
 };
 
 // Path configuration
@@ -159,14 +159,14 @@ const Experience = () => {
       <group ref={planeGroup}>
         <Plane />
       </group>
-      <StaticBg />
+      <Background />
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
         <Line
           points={linePoints}
           color={LINE_CONFIG.COLOR}
           linewidth={LINE_CONFIG.WIDTH}
           transparent
-          opacity={LINE_CONFIG.OPACITY}
+          opacity={LINE_CONFIG.OPACITY - 0.1}
         />
       </group>
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
