@@ -1,24 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 3D Interactive Portfolio
+
+This is a 3D interactive portfolio website built with:
+
+- [Next.js](https://nextjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Three.js](https://threejs.org/)
+- [React Three Fiber](https://github.com/pmndrs/react-three-fiber)
+- [React Three Drei](https://github.com/pmndrs/drei)
+- [Tailwind CSS](https://tailwindcss.com/)
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies:
+
+```bash
+npm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app`: Next.js App Router pages
+- `src/components/three`: 3D components using React Three Fiber
+  - `BoxScene.tsx`: A simple 3D box scene
+  - `Scene.tsx`: The main scene wrapper with camera and controls
+- `src/components/SceneLayout.tsx`: Layout wrapper for the 3D scene
+
+## Features
+
+- Interactive 3D box with rotation animation
+- Camera controls (orbit, pan, zoom)
+- Responsive layout
+- Development statistics panel (in development mode)
+
+## Next Steps
+
+Some ideas to enhance your portfolio:
+
+1. Add more complex 3D models
+2. Implement interactive animations
+3. Create scene transitions
+4. Add text and information sections
+5. Implement custom shaders for unique visual effects
+6. Add loading screen with progress indicator
+7. Optimize for mobile devices
 
 ## Learn More
 
