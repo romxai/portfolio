@@ -21,6 +21,13 @@ type GLTFResult = GLTF & {
 };
 
 const ROTATION_SPEED = 15;
+const PLANE_CONFIG = {
+  MAX_BANK_ANGLE: 0.5, // About 30 degrees max bank
+  BANK_LERP: 0.025, // Very smooth banking transitions
+  ROTATION_LERP: 0.1, // Responsive direction facing
+  LOOK_AHEAD: 3, // Look ahead 3 points for banking
+  POSITION_LERP: 0.1, // Smooth position following
+};
 
 export function Plane(props: ThreeElements["group"]) {
   const { nodes, materials } = useGLTF("/plaine.glb") as unknown as GLTFResult;
@@ -45,7 +52,8 @@ export function Plane(props: ThreeElements["group"]) {
         receiveShadow
         geometry={nodes.plane1.geometry}
         material={materials.Material}
-        scale={0.3}
+        scale={0.2}
+        position={[0, -0.5, 0]}
         rotation={[0.13, 3.14, 0]}
       >
         <mesh

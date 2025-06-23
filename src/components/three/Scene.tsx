@@ -20,16 +20,25 @@ interface SceneProps {
 }
 
 // Animation and smoothing constants
-const NO_OF_POINTS = 2000;
-const SCROLL_SMOOTHING = 10;
-const MOVEMENT_SMOOTHING = 5;
+const NO_OF_POINTS = 12000;
+const SCROLL_SMOOTHING = 2;
+const MOVEMENT_SMOOTHING = 4;
 
 // Camera configuration
 const CAMERA_CONFIG = {
-  FOV: 30,
-  HEIGHT: 1.2, // Height above the path
-  DISTANCE: 10, // Distance from the plane
-  INITIAL_POSITION: new THREE.Vector3(0, 1.5, 10),
+  FOV: 40,
+  HEIGHT: 1.5, // Height above the path
+  DISTANCE: 8, // Distance from the plane
+  INITIAL_POSITION: new THREE.Vector3(0, 1.5, 8),
+};
+
+// Plane movement configuration
+const PLANE_CONFIG = {
+  MAX_BANK_ANGLE: 1, // Maximum banking/tilt angle in radians (about 30 degrees)
+  BANK_LERP: 0.5, // Banking lerp factor (lower = smoother)
+  ROTATION_LERP: 1, // How quickly the plane rotates to face direction
+  LOOK_AHEAD: 3, // How many points to look ahead for banking calculation
+  POSITION_LERP: 0.1, // Position lerp factor
 };
 
 // Path configuration
@@ -78,6 +87,8 @@ const Experience = () => {
   const smoothScroll = useRef(0);
   const lastPosition = useRef(new THREE.Vector3());
   const lastLookAt = useRef(new THREE.Vector3());
+  const currentRotation = useRef(new THREE.Quaternion());
+  const bankAngle = useRef(0);
 
   const scroll = useScroll();
   useFrame((state, delta) => {
@@ -95,11 +106,16 @@ const Experience = () => {
       linePoints.length - 2
     );
 
-    // Get current and next points
+    // Get points for position and direction calculation
     const curPoint = linePoints[curPointIndex];
-    const nextPoint = linePoints[curPointIndex + 1];
+    const nextPoint =
+      linePoints[Math.min(curPointIndex + 1, linePoints.length - 1)];
+    const futurePoint =
+      linePoints[
+        Math.min(curPointIndex + PLANE_CONFIG.LOOK_AHEAD, linePoints.length - 1)
+      ];
 
-    // Calculate smooth position between points
+    // Calculate current position
     const interpolationFactor =
       (smoothScroll.current * (linePoints.length - 1)) % 1;
     const currentPosition = new THREE.Vector3().lerpVectors(
@@ -108,35 +124,76 @@ const Experience = () => {
       interpolationFactor
     );
 
-    // Calculate direction for rotation
-    const direction = new THREE.Vector3()
+    // Calculate forward direction (where the plane should face)
+    const forwardDirection = new THREE.Vector3()
       .subVectors(nextPoint, curPoint)
       .normalize();
-    const targetRotation = new THREE.Quaternion().setFromRotationMatrix(
-      new THREE.Matrix4().lookAt(
-        new THREE.Vector3(),
-        direction,
-        new THREE.Vector3(0, 0, 0)
-      )
+
+    // Calculate the future direction for banking
+    const futureDirection = new THREE.Vector3()
+      .subVectors(futurePoint, currentPosition)
+      .normalize();
+
+    // Calculate right vector and up vector
+    const up = new THREE.Vector3(0, 1, 0);
+    const right = new THREE.Vector3()
+      .crossVectors(forwardDirection, up)
+      .normalize();
+
+    // Calculate banking angle based on future direction
+    const horizontalFuture = new THREE.Vector3(
+      futureDirection.x,
+      0,
+      futureDirection.z
+    ).normalize();
+    const turnAmount = Math.acos(forwardDirection.dot(horizontalFuture));
+    const turnDirection = Math.sign(right.dot(futureDirection));
+
+    // Calculate target bank angle
+    const targetBankAngle =
+      -turnDirection * turnAmount * PLANE_CONFIG.MAX_BANK_ANGLE;
+
+    // Smoothly interpolate the bank angle
+    bankAngle.current = THREE.MathUtils.lerp(
+      bankAngle.current,
+      targetBankAngle,
+      PLANE_CONFIG.BANK_LERP
     );
+
+    // Create the base rotation to face the direction of travel
+    const baseRotation = new THREE.Quaternion().setFromRotationMatrix(
+      new THREE.Matrix4().lookAt(new THREE.Vector3(), forwardDirection, up)
+    );
+
+    // Create the banking rotation
+    const bankRotation = new THREE.Quaternion().setFromAxisAngle(
+      forwardDirection,
+      bankAngle.current
+    );
+
+    // Combine rotations: first face direction, then apply banking
+    const targetRotation = new THREE.Quaternion().multiplyQuaternions(
+      baseRotation,
+      bankRotation
+    );
+
+    // Smoothly interpolate to the target rotation
+    currentRotation.current.slerp(targetRotation, PLANE_CONFIG.ROTATION_LERP);
 
     // Update plane position and rotation
     planeGroup.current.position.lerp(
       currentPosition,
-      delta * MOVEMENT_SMOOTHING
+      PLANE_CONFIG.POSITION_LERP
     );
-    planeGroup.current.quaternion.slerp(
-      targetRotation,
-      delta * MOVEMENT_SMOOTHING
-    );
+    planeGroup.current.quaternion.copy(currentRotation.current);
 
-    // Calculate camera target position (behind the plane)
+    // Update camera position
     const cameraOffset = new THREE.Vector3(
       0,
       CAMERA_CONFIG.HEIGHT,
       CAMERA_CONFIG.DISTANCE
     );
-    cameraOffset.applyQuaternion(planeGroup.current.quaternion);
+    cameraOffset.applyQuaternion(currentRotation.current);
     const targetCameraPos = currentPosition.clone().add(cameraOffset);
 
     // Smooth camera movement
@@ -159,14 +216,14 @@ const Experience = () => {
       <group ref={planeGroup}>
         <Plane />
       </group>
-      <Background />
+      <StaticBg />
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
         <Line
           points={linePoints}
           color={LINE_CONFIG.COLOR}
           linewidth={LINE_CONFIG.WIDTH}
           transparent
-          opacity={LINE_CONFIG.OPACITY - 0.1}
+          opacity={LINE_CONFIG.OPACITY}
         />
       </group>
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
