@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { useMemo, useRef } from "react";
 import { useScroll } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import { Jet } from "./Jet";
 
 interface SceneProps {
   showStats?: boolean;
@@ -214,7 +215,7 @@ const Experience = () => {
         fov={CAMERA_CONFIG.FOV}
       />
       <group ref={planeGroup}>
-        <Plane />
+        <Jet />
       </group>
       <StaticBg />
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
