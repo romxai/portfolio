@@ -14,6 +14,8 @@ import * as THREE from "three";
 import { useMemo, useRef } from "react";
 import { useScroll } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import { Jet } from "./Jet";
+import { gsap } from "gsap";
 
 interface SceneProps {
   showStats?: boolean;
@@ -21,42 +23,29 @@ interface SceneProps {
 
 // Animation and smoothing constants
 const NO_OF_POINTS = 12000;
-const SCROLL_SMOOTHING = 2;
-const MOVEMENT_SMOOTHING = 4;
-
-// Camera configuration
-const CAMERA_CONFIG = {
-  FOV: 40,
-  HEIGHT: 1.5, // Height above the path
-  DISTANCE: 8, // Distance from the plane
-  INITIAL_POSITION: new THREE.Vector3(0, 1.5, 8),
-};
-
-// Plane movement configuration
-const PLANE_CONFIG = {
-  MAX_BANK_ANGLE: 1, // Maximum banking/tilt angle in radians (about 30 degrees)
-  BANK_LERP: 0.5, // Banking lerp factor (lower = smoother)
-  ROTATION_LERP: 1, // How quickly the plane rotates to face direction
-  LOOK_AHEAD: 3, // How many points to look ahead for banking calculation
-  POSITION_LERP: 0.1, // Position lerp factor
-};
+const CURVE_AHEAD_CAMERA = 0.008;
+const CURVE_AHEAD_AIRPLANE = 0.02;
+const FRICTION_DISTANCE = 42;
+const AIRPLANE_MAX_ANGLE = 90; // Maximum banking angle in degrees
+const CAMERA_HEIGHT = 0;
+const CAMERA_DISTANCE = -5;
 
 // Path configuration
 const PATH_POINTS = [
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -10),
-  new THREE.Vector3(-5, 0, -20),
-  new THREE.Vector3(-1, 0, -30),
-  new THREE.Vector3(2, 0, -40),
-  new THREE.Vector3(5, 0, -50),
-  new THREE.Vector3(6, 0, -60),
-  new THREE.Vector3(3, 0, -70),
-  new THREE.Vector3(2.5, 0, -80),
-  new THREE.Vector3(0, 0, -90),
-  new THREE.Vector3(-3, 0, -100),
+  new THREE.Vector3(-3, 0, 0),
+  new THREE.Vector3(0, 0, 10),
+  new THREE.Vector3(2.5, 0, 20),
+  new THREE.Vector3(3, 0, 30),
+  new THREE.Vector3(6, 0, 40),
+  new THREE.Vector3(5, 0, 50),
+  new THREE.Vector3(2, 0, 60),
+  new THREE.Vector3(-1, 0, 70),
+  new THREE.Vector3(-5, 0, 80),
+  new THREE.Vector3(0, 0, 90),
+  new THREE.Vector3(0, 0, 100),
 ];
 
-// Visual configuration
+// Visual configuration for the path line
 const LINE_CONFIG = {
   COLOR: "white",
   WIDTH: 16,
@@ -82,141 +71,154 @@ const Experience = () => {
     return shape;
   }, []);
 
+  // References
   const planeGroup = useRef<THREE.Group>(null);
+  const cameraGroup = useRef<THREE.Group>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
-  const smoothScroll = useRef(0);
-  const lastPosition = useRef(new THREE.Vector3());
-  const lastLookAt = useRef(new THREE.Vector3());
+  const lightRef = useRef<THREE.DirectionalLight>(null);
   const currentRotation = useRef(new THREE.Quaternion());
-  const bankAngle = useRef(0);
 
+  // State tracking
+  const lastScroll = useRef(0);
   const scroll = useScroll();
+
   useFrame((state, delta) => {
-    if (!planeGroup.current || !cameraRef.current) return;
+    if (
+      !planeGroup.current ||
+      !cameraGroup.current ||
+      !cameraRef.current ||
+      !lightRef.current
+    )
+      return;
 
-    // Smooth out the scroll value
-    smoothScroll.current = THREE.MathUtils.lerp(
-      smoothScroll.current,
-      scroll.offset,
-      delta * SCROLL_SMOOTHING
+    // Smooth scroll with friction
+    let scrollOffset = Math.max(0, scroll.offset);
+    let friction = 1;
+
+    let lerpedScrollOffset = THREE.MathUtils.lerp(
+      lastScroll.current,
+      scrollOffset,
+      delta * friction
+    );
+    lerpedScrollOffset = Math.min(Math.max(lerpedScrollOffset, 0), 1);
+    lastScroll.current = lerpedScrollOffset;
+
+    // Get current point and look-ahead points
+    const curPoint = curve.getPoint(lerpedScrollOffset);
+    const lookAtPoint = curve.getPoint(
+      Math.min(lerpedScrollOffset + CURVE_AHEAD_CAMERA, 1)
     );
 
-    const curPointIndex = Math.min(
-      Math.floor(smoothScroll.current * (linePoints.length - 1)),
-      linePoints.length - 2
-    );
-
-    // Get points for position and direction calculation
-    const curPoint = linePoints[curPointIndex];
-    const nextPoint =
-      linePoints[Math.min(curPointIndex + 1, linePoints.length - 1)];
-    const futurePoint =
-      linePoints[
-        Math.min(curPointIndex + PLANE_CONFIG.LOOK_AHEAD, linePoints.length - 1)
-      ];
-
-    // Calculate current position
-    const interpolationFactor =
-      (smoothScroll.current * (linePoints.length - 1)) % 1;
-    const currentPosition = new THREE.Vector3().lerpVectors(
-      curPoint,
-      nextPoint,
-      interpolationFactor
-    );
-
-    // Calculate forward direction (where the plane should face)
-    const forwardDirection = new THREE.Vector3()
-      .subVectors(nextPoint, curPoint)
-      .normalize();
-
-    // Calculate the future direction for banking
-    const futureDirection = new THREE.Vector3()
-      .subVectors(futurePoint, currentPosition)
-      .normalize();
-
-    // Calculate right vector and up vector
+    // Calculate orientation and banking using forward and future directions
     const up = new THREE.Vector3(0, 1, 0);
+
+    // Direction the airplane is currently heading
+    const forwardDirection = new THREE.Vector3()
+      .subVectors(lookAtPoint, curPoint)
+      .normalize();
+
+    // Future direction a bit further on the curve – helps to know if a turn is coming
+    const futurePoint = curve.getPoint(
+      Math.min(lerpedScrollOffset + CURVE_AHEAD_AIRPLANE, 1)
+    );
+    const futureDirection = new THREE.Vector3()
+      .subVectors(futurePoint, curPoint)
+      .normalize();
+
+    // Right vector relative to the airplane
     const right = new THREE.Vector3()
       .crossVectors(forwardDirection, up)
       .normalize();
 
-    // Calculate banking angle based on future direction
+    // Only keep the horizontal component of the future direction (banking should not care about the y component)
     const horizontalFuture = new THREE.Vector3(
       futureDirection.x,
       0,
       futureDirection.z
     ).normalize();
-    const turnAmount = Math.acos(forwardDirection.dot(horizontalFuture));
+
+    // Angle between current forward direction and where we will be heading soon
+    let turnAmount = forwardDirection.angleTo(horizontalFuture); // radians
+
+    // Determine if the turn is to the left or right
     const turnDirection = Math.sign(right.dot(futureDirection));
 
-    // Calculate target bank angle
-    const targetBankAngle =
-      -turnDirection * turnAmount * PLANE_CONFIG.MAX_BANK_ANGLE;
+    // Calculate banking angle (negative = bank left, positive = bank right)
+    let bankAngle = -turnDirection * turnAmount;
 
-    // Smoothly interpolate the bank angle
-    bankAngle.current = THREE.MathUtils.lerp(
-      bankAngle.current,
-      targetBankAngle,
-      PLANE_CONFIG.BANK_LERP
+    // Clamp to our maximum allowed banking angle
+    let bankDegrees = THREE.MathUtils.clamp(
+      (bankAngle * 180) / Math.PI,
+      -AIRPLANE_MAX_ANGLE,
+      AIRPLANE_MAX_ANGLE
     );
+    bankAngle = (bankDegrees * Math.PI) / 180;
 
-    // Create the base rotation to face the direction of travel
+    // Build the target rotation: first face the direction of travel, then apply banking
     const baseRotation = new THREE.Quaternion().setFromRotationMatrix(
       new THREE.Matrix4().lookAt(new THREE.Vector3(), forwardDirection, up)
     );
-
-    // Create the banking rotation
     const bankRotation = new THREE.Quaternion().setFromAxisAngle(
       forwardDirection,
-      bankAngle.current
+      bankAngle
     );
-
-    // Combine rotations: first face direction, then apply banking
     const targetRotation = new THREE.Quaternion().multiplyQuaternions(
       baseRotation,
       bankRotation
     );
 
-    // Smoothly interpolate to the target rotation
-    currentRotation.current.slerp(targetRotation, PLANE_CONFIG.ROTATION_LERP);
+    // Smoothly interpolate the rotation for a natural feel
+    currentRotation.current.slerp(targetRotation, delta * 4);
 
     // Update plane position and rotation
-    planeGroup.current.position.lerp(
-      currentPosition,
-      PLANE_CONFIG.POSITION_LERP
-    );
+    planeGroup.current.position.copy(curPoint);
     planeGroup.current.quaternion.copy(currentRotation.current);
 
-    // Update camera position
+    // Update camera position to stay behind the plane using the same rotation
     const cameraOffset = new THREE.Vector3(
       0,
-      CAMERA_CONFIG.HEIGHT,
-      CAMERA_CONFIG.DISTANCE
+      CAMERA_HEIGHT,
+      CAMERA_DISTANCE
+    ).applyQuaternion(currentRotation.current);
+    cameraGroup.current.position.copy(curPoint.clone().add(cameraOffset));
+    cameraGroup.current.lookAt(curPoint);
+
+    // Update light to follow the plane
+    const lightOffset = new THREE.Vector3(-5, 10, -5).applyQuaternion(
+      currentRotation.current
     );
-    cameraOffset.applyQuaternion(currentRotation.current);
-    const targetCameraPos = currentPosition.clone().add(cameraOffset);
-
-    // Smooth camera movement
-    lastPosition.current.lerp(targetCameraPos, delta * MOVEMENT_SMOOTHING);
-    lastLookAt.current.lerp(currentPosition, delta * MOVEMENT_SMOOTHING);
-
-    // Update camera
-    cameraRef.current.position.copy(lastPosition.current);
-    cameraRef.current.lookAt(lastLookAt.current);
+    lightRef.current.position.copy(curPoint.clone().add(lightOffset));
+    lightRef.current.target.position.copy(curPoint);
+    lightRef.current.target.updateMatrixWorld();
   });
 
   return (
     <>
-      <PerspectiveCamera
-        ref={cameraRef}
-        makeDefault
-        position={CAMERA_CONFIG.INITIAL_POSITION}
-        fov={CAMERA_CONFIG.FOV}
-      />
-      <group ref={planeGroup}>
-        <Plane />
+      <group ref={cameraGroup}>
+        <PerspectiveCamera
+          ref={cameraRef}
+          makeDefault
+          fov={75}
+          position={[0, CAMERA_HEIGHT, CAMERA_DISTANCE]}
+        />
       </group>
+
+      <ambientLight intensity={0.5} />
+      <directionalLight
+        ref={lightRef}
+        position={[-5, 10, -5]}
+        intensity={1}
+        castShadow
+      >
+        <object3D position={[0, 0, 0]} />
+      </directionalLight>
+
+      <group ref={planeGroup}>
+        <Jet rotation={[0, Math.PI, 0]} />
+      </group>
+
       <StaticBg />
+
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
         <Line
           points={linePoints}
@@ -225,8 +227,6 @@ const Experience = () => {
           transparent
           opacity={LINE_CONFIG.OPACITY}
         />
-      </group>
-      <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
         <mesh>
           <extrudeGeometry
             args={[
@@ -251,11 +251,7 @@ const Scene: React.FC<SceneProps> = ({ showStats = false }) => {
       <div className="w-full h-full">
         <Canvas>
           <color attach="background" args={["#eeeece"]} />
-          <OrbitControls
-            enableZoom={false}
-            enablePan={true}
-            enableRotate={true}
-          />
+          <OrbitControls />
           <ScrollControls pages={5} damping={0.25}>
             <Experience />
           </ScrollControls>
