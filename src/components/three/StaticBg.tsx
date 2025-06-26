@@ -27,15 +27,15 @@ const Background = () => {
 
   const uniforms = useMemo(
     () => ({
-      u_colorTop: { value: new THREE.Color("#2742d0") },
-      u_colorBottom: { value: new THREE.Color("#f7e0d6") },
+      u_colorTop: { value: new THREE.Color("#000000") },
+      u_colorBottom: { value: new THREE.Color("#000000") },
     }),
     []
   );
 
   return (
     <mesh ref={meshRef} scale={[100, 100, 100]}>
-      <sphereGeometry args={[1, 64, 64]} />
+      <sphereGeometry args={[1, 1, 100]} />
       <shaderMaterial
         side={THREE.BackSide}
         vertexShader={vertexShader}

@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import {
   Environment,
+  Float,
   Line,
   OrbitControls,
   PerspectiveCamera,
@@ -15,13 +16,23 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { useScroll } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { Jet } from "./Jet";
+import { CloudB } from "./CloudB";
+import { CloudA } from "./CloudA";
 
 interface SceneProps {
   showStats?: boolean;
 }
 
+// Cloud interface
+interface CloudData {
+  type: "A" | "B";
+  scale: THREE.Vector3;
+  position: THREE.Vector3;
+  rotation: THREE.Euler;
+}
+
 // Animation and smoothing constants
-const NO_OF_POINTS = 12000;
+const NO_OF_POINTS = 1200;
 const SCROLL_SMOOTHING = 2;
 const MOVEMENT_SMOOTHING = 4;
 
@@ -49,8 +60,8 @@ const PLANE_CONFIG = {
 // Path configuration
 const PATH_POINTS = [
   new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -10),
-  new THREE.Vector3(-10, 1, -20),
+  new THREE.Vector3(0, 0, -20),
+  new THREE.Vector3(-10, 1, -30),
   new THREE.Vector3(-5, 2, -30),
   new THREE.Vector3(2, 0, -40),
   new THREE.Vector3(5, -1, -50),
@@ -92,6 +103,32 @@ const Experience = () => {
     shape.lineTo(0, 0.5);
     return shape;
   }, []);
+
+  // Cloud configuration
+  const clouds = useMemo<CloudData[]>(
+    () => [
+      // STARTING AREA
+      {
+        type: "A",
+        scale: new THREE.Vector3(1.5, 1.5, 1.5),
+        position: new THREE.Vector3(3, 0.2, 2),
+        rotation: new THREE.Euler(0, 0.2, 0),
+      },
+      {
+        type: "B",
+        scale: new THREE.Vector3(1.5, 1.5, 1.5),
+        position: new THREE.Vector3(-3, 0.2, 2),
+        rotation: new THREE.Euler(0, 0.2, 0),
+      },
+      {
+        type: "A",
+        scale: new THREE.Vector3(1.8, 1.8, 1.8),
+        position: new THREE.Vector3(-4, 2.6, -1.5),
+        rotation: new THREE.Euler(0, 0.2, 0),
+      },
+    ],
+    []
+  );
 
   const planeGroup = useRef<THREE.Group>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
@@ -314,6 +351,7 @@ const Experience = () => {
       console.log("Elevation Change:", elevationChange);
       console.log("Turn Amount:", turnAmount);
       console.log("Turn Direction:", turnDirection);
+      console.log("Scroll Position:", scroll.offset.toFixed(3));
       console.log("========================");
     }
   });
@@ -325,21 +363,38 @@ const Experience = () => {
         makeDefault
         position={CAMERA_CONFIG.INITIAL_POSITION}
         fov={CAMERA_CONFIG.FOV}
+        far={100}
       />
       <group ref={planeGroup}>
-        <Jet />
+        <Float
+          speed={30}
+          rotationIntensity={0.9}
+          floatIntensity={5}
+          floatingRange={[-0.01, 0.01]}
+        >
+          <Jet />
+        </Float>
       </group>
       <Background />
-      <group position={[0, 0, 300]}>
-        <StaticBg />
-      </group>
+      {/* Clouds */}
+      {clouds.map((cloud, index) => (
+        <group
+          key={index}
+          position={cloud.position}
+          rotation={[cloud.rotation.x, cloud.rotation.y, cloud.rotation.z]}
+          scale={cloud.scale}
+        >
+          {cloud.type === "A" ? <CloudA /> : <CloudB />}
+        </group>
+      ))}
+
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
         <Line
           points={linePoints}
           color={LINE_CONFIG.COLOR}
-          linewidth={LINE_CONFIG.WIDTH}
+          linewidth={LINE_CONFIG.WIDTH* 0}
           transparent
-          opacity={LINE_CONFIG.OPACITY}
+          opacity={LINE_CONFIG.OPACITY * 0}
         />
       </group>
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
@@ -380,7 +435,7 @@ const Scene: React.FC<SceneProps> = ({ showStats = false }) => {
   return (
     <>
       <div className="w-full h-full">
-        <Canvas>
+        <Canvas >
           <color attach="background" args={["#eeeece"]} />
           <OrbitControls
             enableZoom={false}

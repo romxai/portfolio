@@ -2,20 +2,27 @@
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useMemo } from "react";
+import { useScroll } from "@react-three/drei";
 
 // Animation speed constants
 const ANIMATION_CONFIG = {
   COLOR_TRANSITION_SPEED: 0.2, // Speed of color changes
   NOISE_MOVEMENT_SPEED: 100, // Speed of noise pattern movement
-  NOISE_SCALE: 10, // Scale of the noise pattern
+  NOISE_SCALE: 15, // Scale of the noise pattern
   NOISE_INTENSITY: 0.05, // How strong the noise affects the colors
+};
+
+// Debug configuration
+const DEBUG = {
+  ENABLED: false,
+  LOG_INTERVAL: 5, // Log every 60 frames
 };
 
 // Sky color palette pairs (top, bottom)
 const SKY_GRADIENTS = {
   DAWN: {
-    TOP: new THREE.Color("#FFB6C1"), // Light pink
-    BOTTOM: new THREE.Color("#4A437F"), // Deep purple
+    TOP: new THREE.Color("#000000"), // Light pink
+    BOTTOM: new THREE.Color("#FFFF00"), // Deep purple
   },
   MORNING: {
     TOP: new THREE.Color("#87CEEB"), // Sky blue
@@ -26,8 +33,8 @@ const SKY_GRADIENTS = {
     BOTTOM: new THREE.Color("#4B93B8"), // Medium blue
   },
   SUNSET: {
-    TOP: new THREE.Color("#FFB6A3"), // Coral
-    BOTTOM: new THREE.Color("#4A233B"), // Deep purple-red
+    TOP: new THREE.Color("#000000"), // Coral
+    BOTTOM: new THREE.Color("#000000"), // Deep purple-red
   },
 };
 
@@ -155,6 +162,8 @@ const fragmentShader = `
 
 const Background = () => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const frameCount = useRef(0);
+  const scroll = useScroll();
 
   // Get all gradient pairs for smooth transitions
   const gradientPairs = Object.values(SKY_GRADIENTS);
@@ -173,22 +182,39 @@ const Background = () => {
   );
 
   useFrame(({ clock }) => {
-    const time =
-      clock.getElapsedTime() * ANIMATION_CONFIG.COLOR_TRANSITION_SPEED;
-    uniforms.u_time.value = time;
+    frameCount.current += 1;
 
-    // Update color pairs every cycle
-    const cycleIndex = Math.floor(time) % gradientPairs.length;
+    // Use scroll.offset (0-1) to determine color transitions
+    // Scale it to cover all gradient pairs
+    const scrollBasedTime = scroll.offset * gradientPairs.length;
+    uniforms.u_time.value = scrollBasedTime;
+
+    // Update color pairs based on scroll position
+    const cycleIndex = Math.floor(scrollBasedTime) % gradientPairs.length;
     const nextIndex = (cycleIndex + 1) % gradientPairs.length;
 
     uniforms.u_topColor1.value = gradientPairs[cycleIndex].TOP;
     uniforms.u_bottomColor1.value = gradientPairs[cycleIndex].BOTTOM;
     uniforms.u_topColor2.value = gradientPairs[nextIndex].TOP;
     uniforms.u_bottomColor2.value = gradientPairs[nextIndex].BOTTOM;
+
+    // Debug logging
+    if (DEBUG.ENABLED && frameCount.current % DEBUG.LOG_INTERVAL === 0) {
+      console.log("=== BACKGROUND DEBUG ===");
+      console.log("Scroll Offset:", scroll.offset.toFixed(3));
+      console.log("Scroll-based Time:", scrollBasedTime.toFixed(3));
+      console.log("Current Gradient Index:", cycleIndex);
+      console.log("Next Gradient Index:", nextIndex);
+      console.log("Current Top Color:", uniforms.u_topColor1.value);
+      console.log("Current Bottom Color:", uniforms.u_bottomColor1.value);
+      console.log("Next Top Color:", uniforms.u_topColor2.value);
+      console.log("Next Bottom Color:", uniforms.u_bottomColor2.value);
+      console.log("========================");
+    }
   });
 
   return (
-    <mesh ref={meshRef} scale={[30, 30, 1000]}>
+    <mesh ref={meshRef} scale={[1000, 1000, 1000]}>
       <sphereGeometry args={[1, 64, 64]} />
       <shaderMaterial
         side={THREE.BackSide}

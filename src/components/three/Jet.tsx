@@ -47,10 +47,6 @@ export function Jet(props: ThreeElements["group"]) {
 
   // References for animation
   const jetRef = useRef<THREE.Group>(null);
-  const engineRef = useRef<THREE.Mesh>(null);
-
-  // Animation parameters
-  const engineSpeed = useRef(0.5);
 
   // Create debug axes geometries
   const axesGeometries = useMemo(() => {
@@ -73,14 +69,6 @@ export function Jet(props: ThreeElements["group"]) {
       zGeometry: new THREE.BufferGeometry().setFromPoints(zPoints),
     };
   }, []);
-
-  // Handle animations
-  useFrame((state, delta) => {
-    if (engineRef.current) {
-      // Rotate engine/propeller
-      engineRef.current.rotation.z -= engineSpeed.current;
-    }
-  });
 
   // Toggle debug axes visibility with 'a' key
   useEffect(() => {
