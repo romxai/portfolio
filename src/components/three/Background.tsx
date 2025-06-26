@@ -188,7 +188,7 @@ const Background = () => {
   });
 
   return (
-    <mesh ref={meshRef} scale={[30, 30, 300]}>
+    <mesh ref={meshRef} scale={[30, 30, 1000]}>
       <sphereGeometry args={[1, 64, 64]} />
       <shaderMaterial
         side={THREE.BackSide}

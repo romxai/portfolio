@@ -58,7 +58,7 @@ const PATH_POINTS = [
   new THREE.Vector3(3, 2, -70),
   new THREE.Vector3(2.5, 1, -80),
   new THREE.Vector3(0, 0, -90),
-  new THREE.Vector3(-1, -1, -100),
+  new THREE.Vector3(-1, -1, -1000),
 ];
 
 // Visual configuration
@@ -330,6 +330,9 @@ const Experience = () => {
         <Jet />
       </group>
       <Background />
+      <group position={[0, 0, 300]}>
+        <StaticBg />
+      </group>
       <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
         <Line
           points={linePoints}
