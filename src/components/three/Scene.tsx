@@ -18,6 +18,7 @@ import { useFrame } from "@react-three/fiber";
 import { Jet } from "./Jet";
 import { CloudB } from "./CloudB";
 import { CloudA } from "./CloudA";
+import { Cat } from "./Cat";
 
 interface SceneProps {
   showStats?: boolean;
@@ -363,12 +364,11 @@ const Experience = () => {
         makeDefault
         position={CAMERA_CONFIG.INITIAL_POSITION}
         fov={CAMERA_CONFIG.FOV}
-        far={100}
       />
       <group ref={planeGroup}>
         <Float
-          speed={30}
-          rotationIntensity={0.9}
+          speed={15}
+          rotationIntensity={0.1}
           floatIntensity={5}
           floatingRange={[-0.01, 0.01]}
         >
