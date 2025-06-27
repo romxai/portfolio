@@ -34,8 +34,8 @@ interface CloudData {
 
 // Animation and smoothing constants
 const NO_OF_POINTS = 1200;
-const SCROLL_SMOOTHING = 2;
-const MOVEMENT_SMOOTHING = 4;
+const SCROLL_SMOOTHING = 1;
+const MOVEMENT_SMOOTHING = 3;
 
 // Camera configuration
 const CAMERA_CONFIG = {
@@ -442,7 +442,7 @@ const Scene: React.FC<SceneProps> = ({ showStats = false }) => {
             enablePan={true}
             enableRotate={true}
           />
-          <ScrollControls pages={5} damping={0.25}>
+          <ScrollControls pages={10} damping={0.5}>
             <Experience />
           </ScrollControls>
           {showStats && <Stats />}
