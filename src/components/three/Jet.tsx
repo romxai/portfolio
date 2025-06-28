@@ -7,6 +7,7 @@ import React, { useRef, useEffect, useMemo } from "react";
 import { PerspectiveCamera, useGLTF } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 import { ThreeElements, useFrame } from "@react-three/fiber";
+import { CAMERA_CONFIG, DEBUG } from "../../utils/sceneConfig";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -27,19 +28,10 @@ type GLTFResult = GLTF & {
   };
 };
 
-const CAMERA_CONFIG = {
-  FOV: 40,
-  HEIGHT: 1.5, // Height above the path
-  DISTANCE: 8, // Distance from the plane
-  INITIAL_POSITION: new THREE.Vector3(0, 1.5, 8),
-};
-
-// Debug configuration
-const DEBUG = {
-  SHOW_AXES: false,
-  AXIS_LENGTH: 2,
-};
-
+/**
+ * Jet component
+ * Renders a realistic jet aircraft with optional debug axes
+ */
 export function Jet(props: ThreeElements["group"]) {
   const { nodes, materials } = useGLTF(
     "/realistic_jet.glb"

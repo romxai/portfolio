@@ -19,55 +19,18 @@ import { Jet } from "./Jet";
 import { CloudB } from "./CloudB";
 import { CloudA } from "./CloudA";
 import { Cat } from "./Cat";
-
-// Fade effect shader modifier
-const fadeOnBeforeCompile = (shader: { fragmentShader: string }) => {
-  const modifiedFragmentShader = shader.fragmentShader
-    .replace(
-      `#include <common>`,
-      `#include <common>
-  float exponentialEasing(float x, float a) {
-  
-    float epsilon = 0.00001;
-    float min_param_a = 0.0 + epsilon;
-    float max_param_a = 1.0 - epsilon;
-    a = max(min_param_a, min(max_param_a, a));
-    
-    if (a < 0.5){
-      // emphasis
-      a = 2.0*(a);
-      float y = pow(x, a);
-      return y;
-    } else {
-      // de-emphasis
-      a = 2.0*(a-0.5);
-      float y = pow(x, 1.0/(1.0-a));
-      return y;
-    }
-  }`
-    )
-    .replace(
-      `vec4 diffuseColor = vec4( diffuse, opacity );`,
-      `
-float fadeDist = 150.0;
-float dist = length(vViewPosition);
-
-float fadeOpacity = smoothstep(fadeDist, 0.0, dist);
-fadeOpacity = exponentialEasing(fadeOpacity, 0.93);
-vec4 diffuseColor = vec4( diffuse, fadeOpacity * opacity );`
-    );
-
-  shader.fragmentShader = modifiedFragmentShader;
-};
-
-// Flat version for materials that need it
-const fadeOnBeforeCompileFlat = (shader: { fragmentShader: string }) => {
-  fadeOnBeforeCompile(shader);
-  shader.fragmentShader = shader.fragmentShader.replace(
-    `#include <output_fragment>`,
-    `gl_FragColor = diffuseColor;`
-  );
-};
+import {
+  fadeOnBeforeCompile,
+  fadeOnBeforeCompileFlat,
+} from "../../utils/shaderEffects";
+import {
+  ANIMATION_CONFIG,
+  CAMERA_CONFIG,
+  PLANE_CONFIG,
+  PATH_POINTS,
+  LINE_CONFIG,
+  DEBUG,
+} from "../../utils/sceneConfig";
 
 interface SceneProps {
   showStats?: boolean;
@@ -81,69 +44,24 @@ interface CloudData {
   rotation: THREE.Euler;
 }
 
-// Animation and smoothing constants
-const NO_OF_POINTS = 1200;
-const SCROLL_SMOOTHING = 1;
-const MOVEMENT_SMOOTHING = 3;
-
-// Camera configuration
-const CAMERA_CONFIG = {
-  FOV: 40,
-  HEIGHT: 1.5, // Height above the path
-  DISTANCE: 8, // Distance from the plane
-  INITIAL_POSITION: new THREE.Vector3(0, 1.5, 8),
-};
-
-// Plane movement configuration
-const PLANE_CONFIG = {
-  MAX_BANK_ANGLE: 0.8, // Maximum banking/tilt angle in radians (about 45 degrees)
-  BANK_LERP: 0.01, // Banking lerp factor (lower = smoother)
-  PITCH_LERP: 0.1, // Pitch lerp factor
-  YAW_LERP: 0.1, // Yaw lerp factor
-  ROTATION_LERP: 0.1, // How quickly the plane rotates to face direction
-  LOOK_AHEAD: 5, // How many points to look ahead for banking calculation
-  POSITION_LERP: 0.1, // Position lerp factor
-  MAX_PITCH_ANGLE: 0.4, // Maximum pitch angle in radians (about 23 degrees)
-  ELEVATION_INFLUENCE: 0.8, // How much elevation changes affect pitch
-};
-
-// Path configuration
-const PATH_POINTS = [
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -20),
-  new THREE.Vector3(-10, 1, -30),
-  new THREE.Vector3(-5, 2, -30),
-  new THREE.Vector3(2, 0, -40),
-  new THREE.Vector3(5, -1, -50),
-  new THREE.Vector3(6, 0, -60),
-  new THREE.Vector3(3, 2, -70),
-  new THREE.Vector3(2.5, 1, -80),
-  new THREE.Vector3(0, 0, -90),
-  new THREE.Vector3(-1, -1, -1000),
-];
-
-// Visual configuration
-const LINE_CONFIG = {
-  COLOR: "white",
-  WIDTH: 16,
-  OPACITY: 0.2,
-  Y_OFFSET: -3,
-};
-
-// Debug configuration
-const DEBUG = {
-  ENABLED: true,
-  LOG_INTERVAL: 60, // Log every 60 frames
-};
-
+/**
+ * Main Experience component
+ * Contains the flight path, plane, and all scene elements
+ */
 const Experience = () => {
+  // Create the flight curve from path points
   const curve = useMemo(
     () => new THREE.CatmullRomCurve3(PATH_POINTS, false, "catmullrom", 0.5),
     []
   );
 
-  const linePoints = useMemo(() => curve.getPoints(NO_OF_POINTS), [curve]);
+  // Generate points along the curve for visualization
+  const linePoints = useMemo(
+    () => curve.getPoints(ANIMATION_CONFIG.NO_OF_POINTS),
+    [curve]
+  );
 
+  // Create the shape for the extruded path
   const lineShape = useMemo(() => {
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
@@ -212,7 +130,7 @@ const Experience = () => {
     smoothScroll.current = THREE.MathUtils.lerp(
       smoothScroll.current,
       scroll.offset,
-      delta * SCROLL_SMOOTHING
+      delta * ANIMATION_CONFIG.SCROLL_SMOOTHING
     );
 
     const curPointIndex = Math.min(
@@ -375,8 +293,14 @@ const Experience = () => {
     const targetCameraPos = currentPosition.clone().add(cameraOffset);
 
     // Smooth camera movement
-    lastPosition.current.lerp(targetCameraPos, delta * MOVEMENT_SMOOTHING);
-    lastLookAt.current.lerp(currentPosition, delta * MOVEMENT_SMOOTHING);
+    lastPosition.current.lerp(
+      targetCameraPos,
+      delta * ANIMATION_CONFIG.MOVEMENT_SMOOTHING
+    );
+    lastLookAt.current.lerp(
+      currentPosition,
+      delta * ANIMATION_CONFIG.MOVEMENT_SMOOTHING
+    );
 
     // Update camera
     cameraRef.current.position.copy(lastPosition.current);
@@ -454,7 +378,11 @@ const Experience = () => {
           <extrudeGeometry
             args={[
               lineShape,
-              { steps: NO_OF_POINTS, bevelEnabled: false, extrudePath: curve },
+              {
+                steps: ANIMATION_CONFIG.NO_OF_POINTS,
+                bevelEnabled: false,
+                extrudePath: curve,
+              },
             ]}
           />
           <meshStandardMaterial
@@ -463,7 +391,9 @@ const Experience = () => {
             opacity={LINE_CONFIG.OPACITY}
             transparent
             envMapIntensity={2}
-            onBeforeCompile={fadeOnBeforeCompile}
+            onBeforeCompile={(shader) =>
+              fadeOnBeforeCompile(shader, 350.0, 0.93)
+            }
           />
         </mesh>
       </group>
@@ -471,6 +401,10 @@ const Experience = () => {
   );
 };
 
+/**
+ * Main Scene component
+ * Sets up the canvas and scene controls
+ */
 const Scene: React.FC<SceneProps> = ({ showStats = false }) => {
   // Add keyboard controls for debugging
   useEffect(() => {
