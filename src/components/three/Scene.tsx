@@ -9,8 +9,6 @@ import {
   Stats,
 } from "@react-three/drei";
 import { Plane } from "./Plane";
-import Background from "./Background";
-import StaticBg from "./StaticBg";
 import * as THREE from "three";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useScroll } from "@react-three/drei";
@@ -31,6 +29,7 @@ import {
   LINE_CONFIG,
   DEBUG,
 } from "../../utils/sceneConfig";
+import BackgroundLamina from "./Backgroundlamina";
 
 interface SceneProps {
   showStats?: boolean;
@@ -335,6 +334,7 @@ const Experience = () => {
 
   return (
     <>
+      <directionalLight position={[-3, 3, 2]} intensity={0.9} />
       <PerspectiveCamera
         ref={cameraRef}
         makeDefault
@@ -351,7 +351,7 @@ const Experience = () => {
           <Jet />
         </Float>
       </group>
-      <Background />
+      <BackgroundLamina />
       {/* Clouds */}
       {clouds.map((cloud, index) => (
         <group
@@ -424,7 +424,7 @@ const Scene: React.FC<SceneProps> = ({ showStats = false }) => {
   return (
     <>
       <div className="w-full h-full">
-        <Canvas>
+        <Canvas gl={{ preserveDrawingBuffer: true }}>
           <color attach="background" args={["#eeeece"]} />
           <OrbitControls
             enableZoom={false}

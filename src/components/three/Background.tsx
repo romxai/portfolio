@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useMemo } from "react";
-import { useScroll } from "@react-three/drei";
+import { Environment, useScroll } from "@react-three/drei";
 import {
   BACKGROUND_CONFIG,
   SKY_GRADIENTS,
@@ -70,6 +70,17 @@ const Background = () => {
   });
 
   return (
+    <>
+    <mesh ref={meshRef} scale={[1000, 1000, 1000]}>
+      <sphereGeometry args={[1, 64, 64]} />
+      <shaderMaterial
+        side={THREE.BackSide}
+        uniforms={uniforms}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+      />
+    </mesh>    
+    <Environment background resolution={256}>
     <mesh ref={meshRef} scale={[1000, 1000, 1000]}>
       <sphereGeometry args={[1, 64, 64]} />
       <shaderMaterial
@@ -79,6 +90,8 @@ const Background = () => {
         fragmentShader={fragmentShader}
       />
     </mesh>
+    </Environment>
+    </>
   );
 };
 

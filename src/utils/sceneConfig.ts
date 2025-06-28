@@ -87,22 +87,23 @@ export const BACKGROUND_CONFIG = {
 
 /**
  * Sky color palette pairs (top, bottom)
+ * These colors will be cycled through as the user scrolls
  */
-export const SKY_GRADIENTS = {
-  DAWN: {
-    TOP: new THREE.Color("#CAE8E8"), // Light pink
-    BOTTOM: new THREE.Color("#000000"), // Deep purple
+export const SKY_GRADIENTS = [
+  {
+    colorA: "#3535cc", // Initial blue
+    colorB: "#abaadd", // Light blue-purple
   },
-  MORNING: {
-    TOP: new THREE.Color("#87CEEB"), // Sky blue
-    BOTTOM: new THREE.Color("#1E4D6B"), // Deep blue
+  {
+    colorA: "#6f35cc", // Purple
+    colorB: "#ffad30", // Orange
   },
-  NOON: {
-    TOP: new THREE.Color("#B7E9F7"), // Light cyan
-    BOTTOM: new THREE.Color("#4B93B8"), // Medium blue
+  {
+    colorA: "#424242", // Dark gray
+    colorB: "#ffcc00", // Yellow
   },
-  SUNSET: {
-    TOP: new THREE.Color("#000000"), // Coral
-    BOTTOM: new THREE.Color("#000000"), // Deep purple-red
+  {
+    colorA: "#81318b", // Purple
+    colorB: "#55ab8f", // Teal
   },
-};
+];

@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
 
 const vertexShader = `
   varying vec2 vUv;
@@ -27,13 +28,14 @@ const Background = () => {
 
   const uniforms = useMemo(
     () => ({
-      u_colorTop: { value: new THREE.Color("#000000") },
+      u_colorTop: { value: new THREE.Color("#ffffff") },
       u_colorBottom: { value: new THREE.Color("#000000") },
     }),
     []
   );
 
   return (
+    <>
     <mesh ref={meshRef} scale={[100, 100, 100]}>
       <sphereGeometry args={[1, 1, 100]} />
       <shaderMaterial
@@ -43,6 +45,18 @@ const Background = () => {
         uniforms={uniforms}
       />
     </mesh>
+    <Environment background resolution={1024}>
+    <mesh ref={meshRef} scale={[100, 100, 100]}>
+      <sphereGeometry args={[1, 1, 100]} />
+      <shaderMaterial
+        side={THREE.BackSide}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        uniforms={uniforms}
+      />
+    </mesh>
+    </Environment>
+    </>
   );
 };
 

@@ -79,10 +79,7 @@ export function Jet(props: ThreeElements["group"]) {
 
   return (
     <group ref={jetRef} {...props} dispose={null}>
-      {/* Ambient light */}
-      <ambientLight intensity={1} />
-      {/* Directional light */}
-      <directionalLight position={[0, 10, 0]} intensity={1} />
+
 
       {/* Main jet model */}
       <group
