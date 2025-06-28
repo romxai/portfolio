@@ -20,6 +20,55 @@ import { CloudB } from "./CloudB";
 import { CloudA } from "./CloudA";
 import { Cat } from "./Cat";
 
+// Fade effect shader modifier
+const fadeOnBeforeCompile = (shader: { fragmentShader: string }) => {
+  const modifiedFragmentShader = shader.fragmentShader
+    .replace(
+      `#include <common>`,
+      `#include <common>
+  float exponentialEasing(float x, float a) {
+  
+    float epsilon = 0.00001;
+    float min_param_a = 0.0 + epsilon;
+    float max_param_a = 1.0 - epsilon;
+    a = max(min_param_a, min(max_param_a, a));
+    
+    if (a < 0.5){
+      // emphasis
+      a = 2.0*(a);
+      float y = pow(x, a);
+      return y;
+    } else {
+      // de-emphasis
+      a = 2.0*(a-0.5);
+      float y = pow(x, 1.0/(1.0-a));
+      return y;
+    }
+  }`
+    )
+    .replace(
+      `vec4 diffuseColor = vec4( diffuse, opacity );`,
+      `
+float fadeDist = 150.0;
+float dist = length(vViewPosition);
+
+float fadeOpacity = smoothstep(fadeDist, 0.0, dist);
+fadeOpacity = exponentialEasing(fadeOpacity, 0.93);
+vec4 diffuseColor = vec4( diffuse, fadeOpacity * opacity );`
+    );
+
+  shader.fragmentShader = modifiedFragmentShader;
+};
+
+// Flat version for materials that need it
+const fadeOnBeforeCompileFlat = (shader: { fragmentShader: string }) => {
+  fadeOnBeforeCompile(shader);
+  shader.fragmentShader = shader.fragmentShader.replace(
+    `#include <output_fragment>`,
+    `gl_FragColor = diffuseColor;`
+  );
+};
+
 interface SceneProps {
   showStats?: boolean;
 }
@@ -105,26 +154,29 @@ const Experience = () => {
     return shape;
   }, []);
 
+  // Reference for the line material to control opacity
+  const lineMaterialRef = useRef<THREE.Material | null>(null);
+
   // Cloud configuration
   const clouds = useMemo<CloudData[]>(
     () => [
       // STARTING AREA
       {
         type: "A",
-        scale: new THREE.Vector3(1.5, 1.5, 1.5),
-        position: new THREE.Vector3(3, 0.2, 2),
+        scale: new THREE.Vector3(1, 1, 1),
+        position: new THREE.Vector3(2.3, 0, 2),
         rotation: new THREE.Euler(0, 0.2, 0),
       },
       {
         type: "B",
         scale: new THREE.Vector3(1.5, 1.5, 1.5),
-        position: new THREE.Vector3(-3, 0.2, 2),
+        position: new THREE.Vector3(-3, -2, 0),
         rotation: new THREE.Euler(0, 0.2, 0),
       },
       {
         type: "A",
         scale: new THREE.Vector3(1.8, 1.8, 1.8),
-        position: new THREE.Vector3(-4, 2.6, -1.5),
+        position: new THREE.Vector3(-4, 2.6, -105),
         rotation: new THREE.Euler(0, 0.2, 0),
       },
     ],
@@ -392,7 +444,7 @@ const Experience = () => {
         <Line
           points={linePoints}
           color={LINE_CONFIG.COLOR}
-          linewidth={LINE_CONFIG.WIDTH* 0}
+          linewidth={LINE_CONFIG.WIDTH * 0}
           transparent
           opacity={LINE_CONFIG.OPACITY * 0}
         />
@@ -406,9 +458,12 @@ const Experience = () => {
             ]}
           />
           <meshStandardMaterial
+            ref={lineMaterialRef}
             color={LINE_CONFIG.COLOR}
             opacity={LINE_CONFIG.OPACITY}
             transparent
+            envMapIntensity={2}
+            onBeforeCompile={fadeOnBeforeCompile}
           />
         </mesh>
       </group>
@@ -435,7 +490,7 @@ const Scene: React.FC<SceneProps> = ({ showStats = false }) => {
   return (
     <>
       <div className="w-full h-full">
-        <Canvas >
+        <Canvas>
           <color attach="background" args={["#eeeece"]} />
           <OrbitControls
             enableZoom={false}
