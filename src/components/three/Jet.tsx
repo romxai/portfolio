@@ -83,7 +83,7 @@ export function Jet(props: ThreeElements["group"]) {
 
       {/* Main jet model */}
       <group
-        position={[0, -0.5, -0.19]}
+        position={[0.1, 0, 0]}
         rotation={[-Math.PI / 2, 0, Math.PI]}
         scale={[0.2, 0.2, 0.2]}
       >

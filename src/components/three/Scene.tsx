@@ -50,7 +50,7 @@ interface CloudData {
 const Experience = () => {
   // Create the flight curve from path points
   const curve = useMemo(
-    () => new THREE.CatmullRomCurve3(PATH_POINTS, false, "catmullrom", 0.5),
+    () => new THREE.CatmullRomCurve3(PATH_POINTS, false, "chordal", 0.5),
     []
   );
 
@@ -64,10 +64,10 @@ const Experience = () => {
   const lineShape = useMemo(() => {
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
-    shape.lineTo(0, -0.5);
-    shape.lineTo(0.2, -0.5);
-    shape.lineTo(0.2, 0.5);
-    shape.lineTo(0, 0.5);
+    shape.lineTo(0, -0.1);
+    shape.lineTo(0.05, -0.1);
+    shape.lineTo(0.05, 0.1);
+    shape.lineTo(0, 0.1);
     return shape;
   }, []);
 
@@ -81,14 +81,26 @@ const Experience = () => {
       {
         type: "A",
         scale: new THREE.Vector3(1, 1, 1),
-        position: new THREE.Vector3(2.3, 0, 2),
-        rotation: new THREE.Euler(0, 0.2, 0),
+        position: new THREE.Vector3(1.8, -0.1, 3),
+        rotation: new THREE.Euler(0, Math.PI, 0),
       },
       {
         type: "B",
         scale: new THREE.Vector3(1.5, 1.5, 1.5),
-        position: new THREE.Vector3(-3, -2, 0),
-        rotation: new THREE.Euler(0, 0.2, 0),
+        position: new THREE.Vector3(-2.5, -0.5, 0),
+        rotation: new THREE.Euler(0, 0, 0),
+      },
+      {
+        type: "B",
+        scale: new THREE.Vector3(1.5, 1.5, 1.5),
+        position: new THREE.Vector3(5, 0.8, -3),
+        rotation: new THREE.Euler(0, -0.7, 0),
+      },
+      {
+        type: "A",
+        scale: new THREE.Vector3(2, 2, 2),
+        position: new THREE.Vector3(-4.5, 0.8, -5),
+        rotation: new THREE.Euler(0, 0, 0),
       },
       {
         type: "A",
@@ -334,7 +346,10 @@ const Experience = () => {
 
   return (
     <>
-      <directionalLight position={[-3, 3, 2]} intensity={0.9} />
+      <directionalLight position={[-3, 3, 2]} intensity={1.1} />
+      <directionalLight position={[-1, 3, 2]} intensity={0.3} />
+      <directionalLight position={[0, 0, 2]} intensity={0.4} />
+
       <PerspectiveCamera
         ref={cameraRef}
         makeDefault
@@ -342,6 +357,7 @@ const Experience = () => {
         fov={CAMERA_CONFIG.FOV}
       />
       <group ref={planeGroup}>
+        <ambientLight intensity={0.2} />
         <Float
           speed={15}
           rotationIntensity={0.1}
@@ -368,12 +384,12 @@ const Experience = () => {
         <Line
           points={linePoints}
           color={LINE_CONFIG.COLOR}
-          linewidth={LINE_CONFIG.WIDTH * 0}
+          linewidth={LINE_CONFIG.WIDTH * 1}
           transparent
           opacity={LINE_CONFIG.OPACITY * 0}
         />
       </group>
-      <group position={[0, LINE_CONFIG.Y_OFFSET, 0]}>
+      <group position={[0, LINE_CONFIG.Y_OFFSET - 0.1, 0]}>
         <mesh>
           <extrudeGeometry
             args={[
@@ -392,7 +408,7 @@ const Experience = () => {
             transparent
             envMapIntensity={2}
             onBeforeCompile={(shader) =>
-              fadeOnBeforeCompile(shader, 350.0, 0.93)
+              fadeOnBeforeCompile(shader, 100.0, 0.93, 10.0, 0.3)
             }
           />
         </mesh>

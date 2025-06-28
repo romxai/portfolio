@@ -119,14 +119,14 @@ const BackgroundLamina = ({ backgroundColors }: BackgroundProps) => {
   return (
     <>
       {/* Background sphere */}
-      <Sphere scale={[500, 500, 500]} rotation-y={Math.PI / 2}>
+      <Sphere scale={[1000, 1000, 1000]} rotation-y={Math.PI / 2}>
         <LayerMaterial color="#ffffff" side={THREE.BackSide}>
           <Gradient ref={gradientRef} axes="y" start={start} end={end} />
         </LayerMaterial>
       </Sphere>
 
       {/* Environment lighting sphere with the same gradient */}
-      <Environment resolution={256} frames={Infinity}>
+      <Environment resolution={50} frames={Infinity}>
         <Sphere
           scale={[100, 100, 100]}
           rotation-y={Math.PI / 2}

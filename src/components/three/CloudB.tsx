@@ -20,7 +20,7 @@ type GLTFResult = GLTF & {
 
 /**
  * CloudB component
- * Renders a cloud model with distance-based fade effect
+ * Renders a cloud model with distance-based fade effect and enhanced depth perception
  */
 export function CloudB(props: ThreeElements["group"]) {
   const { nodes, materials } = useGLTF("/cloudB.glb") as unknown as GLTFResult;
@@ -28,7 +28,8 @@ export function CloudB(props: ThreeElements["group"]) {
 
   // Create a wrapped fade function with explicit parameters
   const handleBeforeCompile = (shader: { fragmentShader: string }) => {
-    fadeOnBeforeCompile(shader, 350.0, 0.93);
+    // Parameters: shader, fadeDistance, easingFactor, nearDistance, depthFactor
+    fadeOnBeforeCompile(shader, 150.0, 0.93, 15.0, 0.4);
   };
 
   return (

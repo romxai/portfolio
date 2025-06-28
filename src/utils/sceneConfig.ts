@@ -17,8 +17,8 @@ export const ANIMATION_CONFIG = {
  * Camera configuration
  */
 export const CAMERA_CONFIG = {
-  FOV: 40,
-  HEIGHT: 1.5, // Height above the path
+  FOV: 35,
+  HEIGHT: 1.6, // Height above the path
   DISTANCE: 8, // Distance from the plane
   INITIAL_POSITION: new THREE.Vector3(0, 1.5, 8),
 };
@@ -41,18 +41,17 @@ export const PLANE_CONFIG = {
 /**
  * Path configuration - defines the flight path points
  */
+
+const curveDistance = -50;
 export const PATH_POINTS = [
   new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -20),
-  new THREE.Vector3(-10, 1, -30),
-  new THREE.Vector3(-5, 2, -30),
-  new THREE.Vector3(2, 0, -40),
-  new THREE.Vector3(5, -1, -50),
-  new THREE.Vector3(6, 0, -60),
-  new THREE.Vector3(3, 2, -70),
-  new THREE.Vector3(2.5, 1, -80),
-  new THREE.Vector3(0, 0, -90),
-  new THREE.Vector3(-1, -1, -1000),
+  new THREE.Vector3(0, 0, curveDistance),
+  new THREE.Vector3(-50, 1, curveDistance * 2),
+  new THREE.Vector3(100, 2, curveDistance * 3),
+  new THREE.Vector3(100, 0, curveDistance * 4),
+  new THREE.Vector3(5, -1, curveDistance * 5),
+  new THREE.Vector3(6, 0, curveDistance * 6),
+  new THREE.Vector3(3, 2, curveDistance * 7),
 ];
 
 /**
@@ -60,7 +59,7 @@ export const PATH_POINTS = [
  */
 export const LINE_CONFIG = {
   COLOR: "white",
-  WIDTH: 16,
+  WIDTH: 2,
   OPACITY: 0.2,
   Y_OFFSET: -3,
 };
@@ -69,7 +68,7 @@ export const LINE_CONFIG = {
  * Debug configuration
  */
 export const DEBUG = {
-  ENABLED: true,
+  ENABLED: false,
   LOG_INTERVAL: 60, // Log every 60 frames
   SHOW_AXES: false,
   AXIS_LENGTH: 2,

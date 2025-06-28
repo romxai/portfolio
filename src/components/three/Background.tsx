@@ -28,10 +28,10 @@ const Background = () => {
       u_time: { value: 0 },
       u_noiseScale: { value: BACKGROUND_CONFIG.NOISE_SCALE },
       u_noiseIntensity: { value: BACKGROUND_CONFIG.NOISE_INTENSITY },
-      u_topColor1: { value: gradientPairs[0].TOP },
-      u_bottomColor1: { value: gradientPairs[0].BOTTOM },
-      u_topColor2: { value: gradientPairs[1].TOP },
-      u_bottomColor2: { value: gradientPairs[1].BOTTOM },
+      u_topColor1: { value: gradientPairs[0].colorA },
+      u_bottomColor1: { value: gradientPairs[0].colorB },
+      u_topColor2: { value: gradientPairs[1].colorA },
+      u_bottomColor2: { value: gradientPairs[1].colorB },
     }),
     []
   );
@@ -49,10 +49,10 @@ const Background = () => {
     const cycleIndex = Math.floor(scrollBasedTime) % gradientPairs.length;
     const nextIndex = (cycleIndex + 1) % gradientPairs.length;
 
-    uniforms.u_topColor1.value = gradientPairs[cycleIndex].TOP;
-    uniforms.u_bottomColor1.value = gradientPairs[cycleIndex].BOTTOM;
-    uniforms.u_topColor2.value = gradientPairs[nextIndex].TOP;
-    uniforms.u_bottomColor2.value = gradientPairs[nextIndex].BOTTOM;
+    uniforms.u_topColor1.value = gradientPairs[cycleIndex].colorA;
+    uniforms.u_bottomColor1.value = gradientPairs[cycleIndex].colorB;
+    uniforms.u_topColor2.value = gradientPairs[nextIndex].colorA;
+    uniforms.u_bottomColor2.value = gradientPairs[nextIndex].colorB;
 
     // Debug logging
     if (DEBUG.ENABLED && frameCount.current % DEBUG.LOG_INTERVAL === 0) {
