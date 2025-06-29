@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/tt
+sample*
 
 # next.js
 /.next/

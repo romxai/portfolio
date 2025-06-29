@@ -106,3 +106,47 @@ export const SKY_GRADIENTS = [
     colorB: "#55ab8f", // Teal
   },
 ];
+
+/**
+ * Text section configuration
+ * Defines the content and positions of text sections throughout the scene
+ */
+export interface TextSectionData {
+  title?: string;
+  subtitle: string;
+  position: THREE.Vector3;
+  rotation?: THREE.Euler;
+  textColor?: string;
+}
+
+export const TEXT_SECTIONS: TextSectionData[] = [
+  {
+    title: "Welcome",
+    subtitle: "Embark on a journey through this interactive portfolio",
+    position: new THREE.Vector3(2, 0, -5),
+    rotation: new THREE.Euler(0, -0.2, 0),
+  },
+  {
+    title: "Creative Design",
+    subtitle: "Blending art and technology to create immersive experiences",
+    position: new THREE.Vector3(-3, 0, -60),
+    rotation: new THREE.Euler(0, 0.3, 0),
+  },
+  {
+    title: "Technical Excellence",
+    subtitle: "Built with React Three Fiber, Three.js, and WebGL shaders",
+    position: new THREE.Vector3(4, 1, -150),
+    rotation: new THREE.Euler(0, -0.4, 0),
+  },
+  {
+    subtitle: "Scroll to continue exploring",
+    position: new THREE.Vector3(0, 0, -200),
+    rotation: new THREE.Euler(0, 0, 0),
+  },
+  {
+    title: "Get in Touch",
+    subtitle: "Let's create something amazing together",
+    position: new THREE.Vector3(-3, 0, -300),
+    rotation: new THREE.Euler(0, 0.2, 0),
+  },
+];
