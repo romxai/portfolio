@@ -106,17 +106,3 @@ export const SKY_GRADIENTS = [
     colorB: "#55ab8f", // Teal
   },
 ];
-
-/**
- * Text section configuration
- * Defines the content and positions of text sections throughout the scene
- */
-export interface TextSectionData {
-  title?: string;
-  subtitle: string;
-  position: THREE.Vector3;
-  rotation?: THREE.Euler;
-  textColor?: string;
-}
-
-export const TEXT_SECTIONS: TextSectionData[] = [];

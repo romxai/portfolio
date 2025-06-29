@@ -7,15 +7,16 @@ import {
   PerspectiveCamera,
   ScrollControls,
   Stats,
-  useScroll,
 } from "@react-three/drei";
 import { Plane } from "./Plane";
 import * as THREE from "three";
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useScroll } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { Jet } from "./Jet";
 import { CloudB } from "./CloudB";
 import { CloudA } from "./CloudA";
+import { Cat } from "./Cat";
 import {
   fadeOnBeforeCompile,
   fadeOnBeforeCompileFlat,
@@ -27,10 +28,8 @@ import {
   PATH_POINTS,
   LINE_CONFIG,
   DEBUG,
-  TEXT_SECTIONS,
 } from "../../utils/sceneConfig";
 import BackgroundLamina from "./Backgroundlamina";
-import { TextSection } from "./TextSection";
 
 interface SceneProps {
   showStats?: boolean;
@@ -409,63 +408,11 @@ const Experience = () => {
             transparent
             envMapIntensity={2}
             onBeforeCompile={(shader) =>
-              fadeOnBeforeCompile(shader, 100.0, 0.93, 40.0, 0.3)
+              fadeOnBeforeCompile(shader, 100.0, 0.93, 10.0, 0.3)
             }
           />
         </mesh>
       </group>
-
-      {/* Text Sections */}
-      {TEXT_SECTIONS.map((section, index) => {
-        // Get current camera position from the path
-        const curPointIndex = Math.min(
-          Math.floor(smoothScroll.current * (linePoints.length - 1)),
-          linePoints.length - 2
-        );
-        const curPoint = linePoints[curPointIndex];
-
-        // Calculate distance between camera and text section
-        const distanceToSection = curPoint.distanceTo(section.position);
-        const visibilityDistance = 120; // Distance at which text becomes visible
-        const fadeDistance = 30; // Distance over which text fades in/out
-
-        // Calculate opacity based on distance (inverse relationship)
-        const opacity = Math.max(
-          0,
-          Math.min(
-            1,
-            1 -
-              (distanceToSection - fadeDistance) /
-                (visibilityDistance - fadeDistance)
-          )
-        );
-
-        return opacity > 0 ? (
-          <group
-            key={`text-section-${index}`}
-            position={section.position}
-            rotation={
-              section.rotation
-                ? [section.rotation.x, section.rotation.y, section.rotation.z]
-                : [0, 0, 0]
-            }
-          >
-            <Float
-              speed={1.5}
-              rotationIntensity={0.1}
-              floatIntensity={0.3}
-              floatingRange={[-0.05, 0.05]}
-            >
-              <TextSection
-                title={section.title}
-                subtitle={section.subtitle}
-                textColor={section.textColor || "white"}
-                opacity={opacity}
-              />
-            </Float>
-          </group>
-        ) : null;
-      })}
     </>
   );
 };
