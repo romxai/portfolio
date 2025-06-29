@@ -409,7 +409,7 @@ const Experience = () => {
             transparent
             envMapIntensity={2}
             onBeforeCompile={(shader) =>
-              fadeOnBeforeCompile(shader, 100.0, 0.93, 20.0, 0.3)
+              fadeOnBeforeCompile(shader, 100.0, 0.93, 40.0, 0.3)
             }
           />
         </mesh>

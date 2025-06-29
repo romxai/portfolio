@@ -79,8 +79,6 @@ export function Jet(props: ThreeElements["group"]) {
 
   return (
     <group ref={jetRef} {...props} dispose={null}>
-
-
       {/* Main jet model */}
       <group
         position={[0.1, 0, 0]}
